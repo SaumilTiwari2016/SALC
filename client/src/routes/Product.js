@@ -47,7 +47,7 @@ const Product = () => {
         <img
           src={imagePath}
           alt={name}
-          className="bg-base-200 w-96 h-96 mr-0 md:mr-14 rounded-xl object-cover mb-6 shadow-xl"
+          className="bg-base-200 w-96 h-96 mr-0 md:mr-14 rounded-xl object-fill mb-6 shadow-xl"
         />
         <div className="flex flex-1 flex-col items-start">
           <p className="mb-4 text-xl">{name}</p>

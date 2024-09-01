@@ -10,7 +10,7 @@ const Product = ({ id, name, imagePath, price, articleNo }) => {
         <img
           src={imagePath}
           alt={name}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
         />
       </Link>
       <div className="card-body">

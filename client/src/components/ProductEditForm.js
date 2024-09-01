@@ -12,7 +12,7 @@ const defaultProduct = {
 }
 
 const ProductEditForm = ({details}) => {
-console.log(details.selectData, ">>>>>>>>>>>");
+console.log(details.selectData, ">>>>>>>>>>>"); 
   const [product, setProduct] = useState({
     id:'',
     name: '',

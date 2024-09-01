@@ -29,17 +29,17 @@ const Navbar = () => {
     </li>
   ) : null
 
-  const productslistEl = user ? (
+  const productslistEl =(
     <li className="hidden sm:block">
       <NavLink to="/productslist">Products</NavLink>
     </li>
-  ) : null
+  ) 
 
-  const contactusEl = user ? (
+  const contactusEl = (
     <li className="hidden sm:block">
       <NavLink to="/contactus">Contact Us</NavLink>
     </li>
-  ) : null
+  )
 
 
   const signInEl = !user ? (
@@ -99,6 +99,16 @@ const Navbar = () => {
               tabIndex={0}
               className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52"
             >
+               {(
+                <li>
+                  <NavLink to="/productslist">Products</NavLink>
+                </li>
+              )}
+               {(
+                <li>
+                  <NavLink to="/contactus">Contact Us</NavLink>
+                </li>
+              )}
               {user ? (
                 <li>
                   <NavLink to="/order">Orders</NavLink>
