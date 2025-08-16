@@ -1,0 +1,148 @@
+/* Layout.css
+   Subtle animated gradient + decorative SVG blobs on the left/right gutters.
+   Colours chosen to match warm/amber theme — tweak CSS variables below to change
+*/
+
+:root {
+    --accent-1: 255, 243, 224;
+    /* very light warm */
+    --accent-2: 255, 248, 240;
+    /* near-white */
+    --print-1: 245, 199, 79;
+    /* warm gold */
+    --print-2: 96, 165, 250;
+    /* soft blue */
+    --print-opacity: 0.08;
+}
+
+/* Base page frame */
+.site-layout {
+    position: relative;
+    min-height: 100vh;
+    background: linear-gradient(180deg, rgba(var(--accent-1)/1) 0%, rgba(var(--accent-2)/1) 12%, #ffffff 100%);
+    overflow-x: hidden;
+}
+
+/* Centered content container */
+.site-container {
+    position: relative;
+    z-index: 20;
+    /* above decorative prints */
+    max-width: 1280px;
+    /* approx tailwind max-w-7xl */
+    margin: 0 auto;
+    padding: 2.5rem 1rem;
+    /* top/bottom & small horizontal pad */
+}
+
+/* Inner used by FullWidthBand to keep inner content aligned */
+.layout-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Full-bleed band wrapper */
+.layout-fullband {
+    width: 100%;
+}
+
+/* gradient animation (very subtle) */
+.gradient-anim {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    background: linear-gradient(120deg,
+            rgba(255, 235, 205, 0.06) 0%,
+            rgba(236, 239, 255, 0.04) 40%,
+            rgba(255, 245, 230, 0.03) 100%);
+    mix-blend-mode: overlay;
+    animation: gradientShift 12s linear infinite;
+    opacity: 0.9;
+    will-change: transform;
+}
+
+@keyframes gradientShift {
+    0% {
+        transform: translateX(-3%) translateY(0) rotate(0deg) scale(1);
+    }
+
+    50% {
+        transform: translateX(3%) translateY(-1%) rotate(0deg) scale(1.02);
+    }
+
+    100% {
+        transform: translateX(-3%) translateY(0) rotate(0deg) scale(1);
+    }
+}
+
+/* side prints (SVG-like decorative blobs) */
+.side-print {
+    position: absolute;
+    top: 10%;
+    bottom: 10%;
+    width: 30vw;
+    max-width: 420px;
+    z-index: 5;
+    filter: blur(20px) saturate(105%);
+    opacity: var(--print-opacity);
+    pointer-events: none;
+}
+
+/* left print */
+.side-print--left {
+    left: -6%;
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(var(--print-1), 0.9) 0%, rgba(var(--print-1), 0.55) 10%, rgba(var(--print-1), 0.18) 30%, transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(var(--print-2), 0.6) 0%, rgba(var(--print-2), 0.18) 20%, transparent 60%);
+    transform: rotate(-8deg) scale(1);
+}
+
+/* right print */
+.side-print--right {
+    right: -6%;
+    background-image:
+        radial-gradient(circle at 80% 30%, rgba(var(--print-2), 0.92) 0%, rgba(var(--print-2), 0.42) 12%, rgba(var(--print-2), 0.15) 28%, transparent 60%),
+        radial-gradient(circle at 15% 85%, rgba(var(--print-1), 0.4) 0%, rgba(var(--print-1), 0.12) 30%, transparent 70%);
+    transform: rotate(8deg) scale(1);
+}
+
+/* responsive: reduce size & blur on small screens */
+@media (max-width: 1024px) {
+    .side-print {
+        width: 36vw;
+        max-width: 340px;
+        top: 6%;
+        bottom: 6%;
+        filter: blur(18px);
+        opacity: calc(var(--print-opacity) * 0.9);
+    }
+}
+
+@media (max-width: 640px) {
+    .side-print {
+        display: none;
+    }
+
+    /* hide decorative prints on very small screens for clarity */
+    .site-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* subtle rounded container example for inner cards (optional helper) */
+.layout-card {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 14px;
+    padding: 1.25rem;
+    box-shadow: 0 6px 20px rgba(12, 18, 36, 0.06);
+}
+
+/* small utility: a gentle horizontal divider */
+.layout-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.03), transparent);
+    margin: 1rem 0;
+}

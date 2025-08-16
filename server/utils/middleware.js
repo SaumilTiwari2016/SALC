@@ -50,14 +50,36 @@ const tokenExtractor = (request, response, next) => {
 }
 
 const userExtractor = async (request, response, next) => {
-  const decodedToken = jwt.verify(request.token, process.env.SECRET)
+  try {
+    const auth = request.get('authorization') || ''
+    logger && logger.info && logger.info('userExtractor auth header: ' + auth)
+    if (!auth.toLowerCase().startsWith('bearer ')) {
+      return response.status(401).json({ error: 'token missing or malformed' })
+    }
 
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'token missing or invalid' })
+    const token = auth.substring(7)
+    let decoded
+    try {
+      decoded = jwt.verify(token, process.env.SECRET)
+    } catch (err) {
+      // clear informative message for expired/invalid tokens
+      if (err.name === 'TokenExpiredError') {
+        return response.status(401).json({ error: 'token expired' })
+      }
+      return response.status(401).json({ error: 'invalid token' })
+    }
+
+    const id = decoded.id || decoded._id
+    if (!id) return response.status(401).json({ error: 'invalid token payload' })
+
+    const user = await User.findById(id)
+    if (!user) return response.status(401).json({ error: 'user not found' })
+
+    request.user = user
+    next()
+  } catch (err) {
+    next(err)
   }
-
-  request.user = await User.findById(decodedToken.id)
-  next()
 }
 
 const orderDataExtractor = async (request, response, next) => {

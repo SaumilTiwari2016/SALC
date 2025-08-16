@@ -2,37 +2,38 @@ import axios from 'axios'
 const baseUrl = '/api/products'
 
 let token = null
-
 const setToken = newToken => {
-  token = `bearer ${newToken}`
+  token = newToken ? `Bearer ${newToken}` : null
 }
 
 const getAll = async () => {
-  const request = axios.get(baseUrl)
-  return request.then(response => response.data)
+  const response = await axios.get(baseUrl)
+  // ensure each product has `id` (some APIs return _id)
+  return response.data.map(p => ({ ...p, id: p.id || p._id }))
 }
 
 const get = async id => {
-  const request = axios.get(`${baseUrl}/${id}`)
-  return request.then(response => response.data)
+  const response = await axios.get(`${baseUrl}/${id}`)
+  return response.data
 }
 
 const create = async newObj => {
-  const config = {
-    headers: { Authorization: token },
-  }
-
-  const response = axios.post(baseUrl, newObj, config)
-  return response.then(response => response.data)
+  const config = token ? { headers: { Authorization: token } } : {}
+  const response = await axios.post(baseUrl, newObj, config)
+  return response.data
 }
 
 const edit = async (id, data) => {
-   const config = {
-    headers: { Authorization: token },
-  }
+  const response = await axios.put(`${baseUrl}/${id}`, data)
+  return response.data
+}
 
-  const response = axios.post(baseUrl, id, data, config)
-  return response.then(response => response.data)
-} 
 
-export default { get, getAll, create, setToken, edit }
+
+const remove = async (id) => {
+  const response = await axios.delete(`${baseUrl}/${id}`)
+  return response.data
+}
+
+
+export default { setToken, getAll, get, create, edit, remove }

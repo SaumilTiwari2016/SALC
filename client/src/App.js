@@ -5,6 +5,7 @@ import Home from './routes/Home'
 import Error from './routes/Error'
 import Product from './routes/Product'
 import Cart from './routes/Cart'
+import Update from './routes/Update'
 
 import { productLoader } from './routes/loaders'
 import Login from './routes/Login'
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
         path: 'products/:productId',
         element: <Product />,
         loader: productLoader,
+      },
+      {
+        path: 'update/:Id',
+        element: <Update />,
       },
       {
         path: 'cart',

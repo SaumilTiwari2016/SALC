@@ -1,123 +1,95 @@
-import React, { Fragment, useState, useEffect } from 'react'
-import Alert from './Alert'
-import axios from 'axios'
-import { AiOutlineEdit } from 'react-icons/ai'
+import React, { useState, useEffect } from 'react'
+import productService from '../services/products'
 
-const defaultProduct = {
-  name: '',
-  price: '',
-  articleNo:'',
-  description: '',
-  imagePath: '',
-}
-
-const ProductEditForm = ({details}) => {
-console.log(details.selectData, ">>>>>>>>>>>"); 
-  const [product, setProduct] = useState({
-    id:'',
+const ProductEditForm = ({ product, onSaved, onClose }) => {
+  const [formData, setFormData] = useState({
     name: '',
+    articleNo: '',
     price: '',
-    articleNo:'',
     description: '',
-    imagePath: '',
-})
+    imagePath: ''
+  })
 
- useEffect(() => {
-    if (details && details.selectData) {
-      const { id, name, price, articleNo, description, imagePath } = details.selectData;
-      
-      console.log(details.selectData, ">>>>>>>>>>>");
-
-      setProduct({
-        id: id || '',
-        name: name || '',
-        price: price || '',
-        articleNo: articleNo || '',
-        description: description || '',
-        imagePath: imagePath || ''
-      });
+  useEffect(() => {
+    if (product) {
+      setFormData({
+        name: product.name || '',
+        articleNo: product.articleNo || '',
+        price: product.price || '',
+        description: product.description || '',
+        imagePath: product.imagePath || ''
+      })
     }
-  }, [details]);
- 
+  }, [product])
 
+  if (!product) return null
+
+  const handleChange = e => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async e => {
+    e.preventDefault()
+    try {
+      const updated = await productService.edit(product.id, formData)
+      onSaved(updated)
+    } catch (err) {
+      console.error('Update failed', err)
+    }
+  }
 
   return (
-    <Fragment>
-        <label htmlFor="my-modal-1" className="btn btn-outline btn-sm mb-6">
-        <AiOutlineEdit/>
-      </label>
-         
-      <input type="checkbox" id="my-modal-1" className="modal-toggle" />
-      <div className="modal" id="my-modal-1">
+    <>
+      <input type="checkbox" id="edit-modal-toggle" className="modal-toggle" />
+      <div className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-3">Edit Product</h3>
-          <Alert alert={alert} />
-          <form
-            id="Product-Edit-Form"
-            className="flex flex-col"
-            // onSubmit={handleSave}
-          >
+          <h3 className="font-bold text-lg mb-4">Edit Product</h3>
+          <form onSubmit={handleSubmit}>
             <input
-              className="input input-bordered mb-2"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               placeholder="Name"
-              value={product.name}
-              readOnly
-            //   onChange={handleProductChange('name')}
-              required
+              className="input input-bordered w-full mb-2"
             />
             <input
-              className="input input-bordered mb-2"
+              name="articleNo"
+              value={formData.articleNo}
+              onChange={handleChange}
               placeholder="Article No"
-              value={product.articleNo}
-              readOnly
-            //   onChange={handleProductChange('articleNo')}
-              required
+              className="input input-bordered w-full mb-2"
             />
             <input
-              type={'number'}
-              className="input input-bordered mb-2"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
               placeholder="Price"
-              value={product.price}
-              readOnly
-            //   onChange={handleProductChange('price')}
-              required
-            />
-            <input
-              className="input input-bordered mb-2"
-              placeholder="Image Url"
-              value={product.imagePath}
-              readOnly
-            //   onChange={handleProductChange('imagePath')}
-              required
+              className="input input-bordered w-full mb-2"
             />
             <textarea
-              className="textarea textarea-bordered"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
               placeholder="Description"
-              value={product.description}
-              readOnly
-            //   onChange={handleProductChange('description')}
-              required
+              className="textarea textarea-bordered w-full mb-2"
             />
+            <input
+              name="imagePath"
+              value={formData.imagePath}
+              onChange={handleChange}
+              placeholder="Image URL"
+              className="input input-bordered w-full mb-4"
+            />
+
+            <div className="modal-action">
+              <button type="submit" className="btn btn-primary">Save</button>
+              <label htmlFor="edit-modal-toggle" className="btn" onClick={onClose}>Cancel</label>
+            </div>
           </form>
-          <div className="modal-action">
-            <label
-              htmlFor="my-modal-1"
-              className="btn btn-ghost"
-            //  onClick={onCancel}
-            >
-              Cancel
-            </label>
-            <button
-              className="btn btn-primary"
-              form="Product-Edit-Form"
-              type="submit"
-            >
-              Save
-            </button>
-          </div>
         </div>
       </div>
-    </Fragment>
+    </>
   )
 }
 

@@ -1,228 +1,318 @@
-
-import { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import axios from 'axios'
+import { Switch } from '@headlessui/react'
 import Alert from '../components/Alert'
-import axios from "axios";
-import { ChevronDownIcon } from '@heroicons/react/20/solid'
-import { Field, Label, Switch } from '@headlessui/react'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
 export default function ContactUs() {
-   const [alert, setAlert] = useState(null)
+  const [alert, setAlert] = useState(null)
+  const [sending, setSending] = useState(false)
   const [agreed, setAgreed] = useState(false)
-  const [formData, setformData] = useState({
-    firstname:"",
-    lastname:"",
-    company:"",
-    message:"",
-    phonenumber:"",
-    email:""
+  const formRef = useRef(null)
+
+  const [formData, setFormData] = useState({
+    firstname: '',
+    lastname: '',
+    company: '',
+    message: '',
+    phonenumber: '',
+    email: '',
   })
 
-  const onChangeHandler = (event) => {
-     setformData(() => ({
-      ...formData,
-      [event.target.name]:event.target.value
-     }))
+  useEffect(() => {
+    if (!alert) return
+    const t = setTimeout(() => setAlert(null), 6000)
+    return () => clearTimeout(t)
+  }, [alert])
+
+  const onChangeHandler = e => {
+    const { name, value } = e.target
+    setFormData(fd => ({ ...fd, [name]: value }))
   }
 
-  const onSubmitHandler = (event) => {
-      event.preventDefault();
+  const validate = () => {
+    const { firstname, lastname, email, message, phonenumber } = formData
+    if (!firstname.trim() || !lastname.trim()) {
+      setAlert({ message: 'Please provide your first and last name.', type: 'error' })
+      return false
+    }
+    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
+      setAlert({ message: 'Please enter a valid email address.', type: 'error' })
+      return false
+    }
+    if (!phonenumber.trim() || phonenumber.trim().length < 6) {
+      setAlert({ message: 'Please enter a valid phone number.', type: 'error' })
+      return false
+    }
+    if (!message.trim() || message.trim().length < 10) {
+      setAlert({ message: 'Message is too short — please provide details.', type: 'error' })
+      return false
+    }
+    if (!agreed) {
+      setAlert({ message: 'Please agree to the privacy policy before submitting.', type: 'error' })
+      return false
+    }
+    return true
+  }
 
-        axios({
-            // Endpoint to send files
-            url: "/api/contact",
-            method: "POST",
-            data: formData,
-        }).then((res) => {
+  const onSubmitHandler = async e => {
+    e.preventDefault()
+    if (!validate()) return
 
-          setAlert({
-            message: 'Submitted Successfully',
-            type: 'success'
-          });
-
-           
-            event.target.reset();
-            setformData({
-              firstname:"",
-              lastname:"",
-              company:"",
-              message:"",
-              phonenumber:"",
-              email:""
-          })
-
-        }).catch((err) => {
-          setAlert({
-            message:'Something want wrong!',
-            type: 'error'
-          })
-        });
-
-      console.log("submitted");
+    setSending(true)
+    setAlert(null)
+    try {
+      await axios.post('/api/contact', formData)
+      setAlert({ message: 'Submitted successfully — we will contact you shortly.', type: 'success' })
+      setFormData({
+        firstname: '',
+        lastname: '',
+        company: '',
+        message: '',
+        phonenumber: '',
+        email: '',
+      })
+      setAgreed(false)
+      if (formRef.current) formRef.current.reset()
+    } catch (err) {
+      console.error(err)
+      setAlert({
+        message:
+          err?.response?.data?.error ||
+          'Something went wrong while sending your message. Please try again.',
+        type: 'error',
+      })
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
-    <div>
-      <Alert alert={alert}/>
-    <div className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
-      <div
-        className="absolute inset-x-0 top-[-10rem] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[-20rem]"
-        aria-hidden="true"
-      >
-        <div
-          className="relative left-1/2 -z-10 aspect-[1155/678] w-[36.125rem] max-w-none -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-40rem)] sm:w-[72.1875rem]"
-          style={{
-            clipPath:
-              'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-          }}
-        />
-      </div>
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Contact Us</h2>
-        <p className="mt-2 text-lg leading-8 text-gray-600">
-          Have questions or need assistance? Our team is here to help with all your synthetic leather needs.
-        </p>
-      </div>
-      <form onSubmit={onSubmitHandler} className="mx-auto mt-16 max-w-xl sm:mt-20">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor="firstname" className="block text-sm font-semibold leading-6 text-gray-900">
-              First name
-            </label>
-            <div className="mt-2.5">
-              <input
-                type="text"
-                name="firstname"
-                id="firstname"
-                autoComplete="given-name"
-                onChange={onChangeHandler}
-                required
-                className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              />
+    <div
+      className="min-h-screen py-16"
+      style={{
+        background: 'linear-gradient(180deg,#FFF8ED 0%, #FEFDFB 50%, #FFFFFF 100%)',
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Page header */}
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            Contact Us
+          </h2>
+          <p className="mt-3 text-lg text-slate-600">
+            Have a question, order inquiry or custom request? Fill the form and our team will reach out.
+          </p>
+        </div>
+
+        {/* Alert */}
+        <div className="mt-8">
+          <Alert alert={alert} />
+        </div>
+
+        {/* Main card */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left: contact info / warm intro */}
+          <aside className="rounded-2xl p-8 bg-white shadow-sm border border-slate-100">
+            <h3 className="text-xl font-semibold text-slate-900">Get in touch</h3>
+            <p className="mt-3 text-slate-600">
+              We aim to reply within 24 business hours. For urgent requests, call us at the number below.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <p className="text-sm text-slate-500">Email</p>
+                <a href="mailto:hello@yourdomain.com" className="text-slate-800 font-medium hover:underline">
+                  hello@yourdomain.com
+                </a>
+              </div>
+
+              <div>
+                <p className="text-sm text-slate-500">Phone</p>
+                <a href="tel:+911234567890" className="text-slate-800 font-medium hover:underline">
+                  +91 12345 67890
+                </a>
+              </div>
+
+              <div>
+                <p className="text-sm text-slate-500">Address</p>
+                <address className="not-italic text-slate-700">
+                  1234 Sample Street, City, State — 400001
+                </address>
+              </div>
             </div>
-          </div>
-          <div>
-            <label htmlFor="lastname" className="block text-sm font-semibold leading-6 text-gray-900">
-              Last name
-            </label>
-            <div className="mt-2.5">
-              <input
-                type="text"
-                name="lastname"
-                id="lastname"
-                autoComplete="family-name"
-                onChange={onChangeHandler}
-                required
-                className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              />
+
+            <div className="mt-8">
+              <h4 className="text-sm font-semibold text-slate-900">Business hours</h4>
+              <p className="mt-1 text-sm text-slate-600">Mon — Fri: 9:00 AM — 6:00 PM</p>
             </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="company" className="block text-sm font-semibold leading-6 text-gray-900">
-              Company
-            </label>
-            <div className="mt-2.5">
-              <input
-                type="text"
-                name="company"
-                id="company"
-                autoComplete="organization"
-                onChange={onChangeHandler}
-                required
-                className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              />
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="email" className="block text-sm font-semibold leading-6 text-gray-900">
-              Email
-            </label>
-            <div className="mt-2.5">
-              <input
-                type="email"
-                name="email"
-                id="email"
-                autoComplete="email"
-                onChange={onChangeHandler}
-                required
-                className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              />
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="phonenumber" className="block text-sm font-semibold leading-6 text-gray-900">
-              Phone number
-            </label>
-            <div className="mt-2.5">
-              <input
-                type="tel"
-                name="phonenumber"
-                id="phonenumber"
-                autoComplete="tel"
-                onChange={onChangeHandler}
-                required
-                className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              />
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="message" className="block text-sm font-semibold leading-6 text-gray-900">
-              Message
-            </label>
-            <div className="mt-2.5">
-              <textarea
-                name="message"
-                id="message"
-                rows={4}
-                onChange={onChangeHandler}
-                required
-                className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                defaultValue={''}
-              />
-            </div>
-          </div>
-          <Field as="div" className="flex gap-x-4 sm:col-span-2">
-            <div className="flex h-6 items-center">
-              <Switch
-                checked={agreed}
-                onChange={setAgreed}
-                className={classNames(
-                  agreed ? 'bg-indigo-600' : 'bg-gray-200',
-                  'flex w-8 flex-none cursor-pointer rounded-full p-px ring-1 ring-inset ring-gray-900/5 transition-colors duration-200 ease-in-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
-                )}
-              >
-                <span className="sr-only">Agree to policies</span>
-                <span
-                  aria-hidden="true"
-                  className={classNames(
-                    agreed ? 'translate-x-3.5' : 'translate-x-0',
-                    'h-4 w-4 transform rounded-full bg-white shadow-sm ring-1 ring-gray-900/5 transition duration-200 ease-in-out',
-                  )}
+          </aside>
+
+          {/* Right: form */}
+          <main className="rounded-2xl p-8 bg-white shadow-sm border border-slate-100">
+            <form ref={formRef} onSubmit={onSubmitHandler} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="firstname" className="block text-sm font-medium text-slate-700">
+                    First name
+                  </label>
+                  <input
+                    id="firstname"
+                    name="firstname"
+                    type="text"
+                    value={formData.firstname}
+                    onChange={onChangeHandler}
+                    required
+                    className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    placeholder="Jane"
+                    aria-label="First name"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="lastname" className="block text-sm font-medium text-slate-700">
+                    Last name
+                  </label>
+                  <input
+                    id="lastname"
+                    name="lastname"
+                    type="text"
+                    value={formData.lastname}
+                    onChange={onChangeHandler}
+                    required
+                    className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    placeholder="Doe"
+                    aria-label="Last name"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="company" className="block text-sm font-medium text-slate-700">
+                  Company
+                </label>
+                <input
+                  id="company"
+                  name="company"
+                  type="text"
+                  value={formData.company}
+                  onChange={onChangeHandler}
+                  className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                  placeholder="Your company (optional)"
+                  aria-label="Company"
                 />
-              </Switch>
-            </div>
-            <Label className="text-sm leading-6 text-gray-600">
-              By selecting this, you agree to our{' '}
-              <a href="#" className="font-semibold text-indigo-600">
-                privacy&nbsp;policy
-              </a>
-              .
-            </Label>
-          </Field>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={onChangeHandler}
+                    required
+                    className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    placeholder="email@example.com"
+                    aria-label="Email"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="phonenumber" className="block text-sm font-medium text-slate-700">
+                    Phone number
+                  </label>
+                  <input
+                    id="phonenumber"
+                    name="phonenumber"
+                    type="tel"
+                    value={formData.phonenumber}
+                    onChange={onChangeHandler}
+                    required
+                    className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    placeholder="+91 12 3456 7890"
+                    aria-label="Phone number"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-slate-700">
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows={5}
+                  value={formData.message}
+                  onChange={onChangeHandler}
+                  required
+                  className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                  placeholder="Tell us about your request..."
+                  aria-label="Message"
+                />
+              </div>
+
+              {/* Agree switch */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <Switch
+                    checked={agreed}
+                    onChange={setAgreed}
+                    className={classNames(
+                      agreed ? 'bg-amber-500' : 'bg-slate-200',
+                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none'
+                    )}
+                    aria-label="Agree to privacy policy"
+                  >
+                    <span
+                      className={classNames(
+                        agreed ? 'translate-x-6' : 'translate-x-1',
+                        'inline-block h-4 w-4 transform rounded-full bg-white shadow'
+                      )}
+                      aria-hidden="true"
+                    />
+                  </Switch>
+                </div>
+
+                <div className="text-sm">
+                  <label className="font-medium text-slate-900">I agree to the privacy policy</label>
+                  <p className="text-slate-600">We’ll use your contact details to respond to your inquiry. You can unsubscribe anytime.</p>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className={classNames(
+                    'inline-flex items-center justify-center w-full rounded-lg px-6 py-3 text-sm font-semibold shadow',
+                    sending ? 'bg-amber-300 text-white cursor-not-allowed' : 'bg-amber-500 text-white hover:bg-amber-600'
+                  )}
+                >
+                  {sending ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    "Let's talk"
+                  )}
+                </button>
+              </div>
+            </form>
+          </main>
         </div>
-        <div className="mt-10">
-          <button
-            type="submit"
-            className="block w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Let's talk
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
     </div>
   )
 }
